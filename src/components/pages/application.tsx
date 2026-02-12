@@ -10,10 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { Separator } from "../ui/separator";
-import { Trash2 } from "lucide-react";
+import { LayoutGrid, Table2, Trash2 } from "lucide-react";
 import axios from "axios";
 import { Spinner } from "../ui/spinner";
+import { ButtonGroup } from "../ui/button-group";
 
 interface Expense {
   type: string;
@@ -63,9 +72,9 @@ const EXPENSE_LABEL_MAP = Object.fromEntries(
 );
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-PH", {
     style: "currency",
-    currency: "USD",
+    currency: "PHP",
   }).format(value);
 
 export default function ApplicationPage() {
@@ -81,6 +90,8 @@ export default function ApplicationPage() {
   const [amount, setAmount] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   const [expensesByDay, setExpensesByDay] = useState<
     Record<string, DayExpenses>
@@ -132,7 +143,7 @@ export default function ApplicationPage() {
       console.log(payload);
 
       const res = await axios.post(
-        "https://script.google.com/macros/s/AKfycbzujKR5pql5ohHn0n9vQqmNI7AcDIKetE6yOFmdQBlfjUKKAmZ7leBSzvnc8GVsO5o/exec",
+        "https://script.google.com/macros/s/AKfycbxNr5ofw0u3glqe1oE9-gAqLIGf32A6zo3BX8_VF7vwDbgprxHMQjPUwgg5V6pi26E/exec",
         JSON.stringify(payload),
       );
 
@@ -405,82 +416,184 @@ export default function ApplicationPage() {
                 </div>
               </div>
 
-              <table className="w-full border mt-3 text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-2 text-left">Day</th>
-                    <th className="p-2 text-left">Location</th>
-                    <th className="p-2 text-left">Expenses</th>
-                    <th className="p-2 text-left">Total</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
+              <ButtonGroup className="ml-auto">
+                <Button
+                  size="sm"
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  onClick={() => setViewMode("table")}
+                >
+                  <Table2 />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={viewMode === "card" ? "default" : "outline"}
+                  onClick={() => setViewMode("card")}
+                >
+                  <LayoutGrid />
+                </Button>
+              </ButtonGroup>
+
+              {viewMode === "table" ? (
+                <>
+                  <Table className="mt-3 text-xs">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Day</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Expenses</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {generatedWeek.map(({ key, label }) => {
+                        const dayData = expensesByDay[key];
+
+                        return (
+                          <TableRow key={key}>
+                            <TableCell>{label}</TableCell>
+
+                            <TableCell>
+                              <Input
+                                value={dayData?.location || ""}
+                                placeholder="Enter location"
+                                onChange={(e) => {
+                                  const loc = e.target.value.toUpperCase();
+                                  setExpensesByDay((prev) => ({
+                                    ...prev,
+                                    [key]: {
+                                      date: label,
+                                      location: loc,
+                                      items: dayData?.items || {},
+                                    },
+                                  }));
+                                }}
+                                className="uppercase h-8 text-xs min-w-30"
+                              />
+                            </TableCell>
+
+                            <TableCell className="space-y-1">
+                              {dayData &&
+                                Object.values(dayData.items).map((item) => (
+                                  <div
+                                    key={item.type}
+                                    className="flex justify-between items-center gap-2"
+                                  >
+                                    <span>{EXPENSE_LABEL_MAP[item.type]}</span>
+                                    <span>{formatCurrency(item.amount)}</span>
+                                    <Button
+                                      size="icon"
+                                      variant="destructive"
+                                      onClick={() =>
+                                        deleteExpense(key, item.type)
+                                      }
+                                      className="h-6 w-6"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                            </TableCell>
+
+                            <TableCell className="font-semibold">
+                              {dayData
+                                ? formatCurrency(dayTotal(dayData.items))
+                                : formatCurrency(0)}
+                            </TableCell>
+
+                            <TableCell>
+                              {dayData && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteDay(key)}
+                                  className="h-7 text-xs"
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </>
+              ) : (
+                <div className="grid gap-4 mt-3">
                   {generatedWeek.map(({ key, label }) => {
                     const dayData = expensesByDay[key];
+
                     return (
-                      <tr key={key} className="border-b">
-                        <td className="p-2">{label}</td>
-                        <td className="p-2">
-                          <Input
-                            value={dayData?.location || ""}
-                            placeholder="Enter location"
-                            onChange={(e) => {
-                              const loc = e.target.value.toUpperCase();
-                              setExpensesByDay((prev) => ({
-                                ...prev,
-                                [key]: {
-                                  date: label,
-                                  location: loc,
-                                  items: dayData?.items || {},
-                                },
-                              }));
-                            }}
-                            className="uppercase w-full"
-                          />
-                        </td>
-                        <td className="p-2 space-y-1">
+                      <div
+                        key={key}
+                        className="border rounded-lg p-4 space-y-2 bg-white shadow-sm"
+                      >
+                        <div className="font-semibold text-sm">{label}</div>
+
+                        <Input
+                          value={dayData?.location || ""}
+                          placeholder="Enter location"
+                          onChange={(e) => {
+                            const loc = e.target.value.toUpperCase();
+                            setExpensesByDay((prev) => ({
+                              ...prev,
+                              [key]: {
+                                date: label,
+                                location: loc,
+                                items: dayData?.items || {},
+                              },
+                            }));
+                          }}
+                          className="uppercase text-xs"
+                        />
+
+                        <div className="space-y-1">
                           {dayData &&
                             Object.values(dayData.items).map((item) => (
                               <div
                                 key={item.type}
-                                className="flex justify-between items-center gap-2"
+                                className="flex justify-between items-center text-xs"
                               >
                                 <span>{EXPENSE_LABEL_MAP[item.type]}</span>
                                 <span>{formatCurrency(item.amount)}</span>
                                 <Button
-                                  size={"icon-sm"}
+                                  size="icon"
                                   variant="destructive"
                                   onClick={() => deleteExpense(key, item.type)}
+                                  className="h-6 w-6"
                                 >
-                                  <Trash2 />
+                                  <Trash2 className="h-3 w-3" />
                                 </Button>
                               </div>
                             ))}
-                        </td>
-                        <td className="p-2 font-semibold">
+                        </div>
+
+                        <div className="font-bold text-right text-sm">
+                          Total:{" "}
                           {dayData
                             ? formatCurrency(dayTotal(dayData.items))
                             : formatCurrency(0)}
-                        </td>
-                        <td className="p-2">
-                          {dayData && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteDay(key)}
-                            >
-                              Delete Day
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+                        </div>
+
+                        {dayData && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteDay(key)}
+                            className="w-full text-xs"
+                          >
+                            Delete Day
+                          </Button>
+                        )}
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
+                </div>
+              )}
 
-              <div className="text-right font-bold mt-4 text-lg">
+              <div className="text-right font-bold mt-4 text-base">
                 Grand Total: {formatCurrency(grandTotal)}
               </div>
 
