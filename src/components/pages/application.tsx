@@ -23,6 +23,7 @@ import { LayoutGrid, Table2, Trash2 } from "lucide-react";
 import axios from "axios";
 import { Spinner } from "../ui/spinner";
 import { ButtonGroup } from "../ui/button-group";
+import { toast } from "sonner";
 
 interface Expense {
   type: string;
@@ -100,7 +101,7 @@ export default function ApplicationPage() {
   // Submit the form
   const handleSubmit = async () => {
     if (!employeeName || !position || !purpose || !startDate) {
-      alert("Please complete all required fields before submitting.");
+      toast.error("Please complete all required fields before submitting.");
       return;
     }
 
@@ -110,7 +111,7 @@ export default function ApplicationPage() {
     );
 
     if (missingLocationDays.length > 0) {
-      alert(
+      toast.error(
         `Please enter location for all days. Missing for: ${missingLocationDays
           .map((d) => d.label)
           .join(", ")}`,
@@ -124,7 +125,7 @@ export default function ApplicationPage() {
         (day) => !day.items || Object.keys(day.items).length === 0,
       )
     ) {
-      alert("Please add at least one expense before submitting.");
+      toast.error("Please add at least one expense before submitting.");
       return;
     }
 
@@ -148,14 +149,16 @@ export default function ApplicationPage() {
       );
 
       if (res.status === 200) {
-        alert("Form submitted successfully!");
+        toast.success("Form submitted successfully!");
         handleClearAll();
       } else {
-        alert("Something went wrong. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       }
     } catch (error: any) {
       console.error(error);
-      alert("Error submitting form: " + (error?.message || "Unknown error"));
+      toast.error(
+        "Error submitting form: " + (error?.message || "Unknown error"),
+      );
     } finally {
       setLoading(false);
     }
@@ -178,7 +181,7 @@ export default function ApplicationPage() {
   const handleStartDateChange = (value: string) => {
     const date = new Date(value);
     if (date.getDay() !== 1) {
-      alert("Start date must be a Monday.");
+      toast.error("Start date must be a Monday.");
       return;
     }
     setStartDate(value);
@@ -220,13 +223,20 @@ export default function ApplicationPage() {
       !amount ||
       (!existingDayData?.location && !location)
     ) {
-      alert("Please complete all required fields before adding an expense.");
+      toast.error(
+        "Please complete all required fields before adding an expense.",
+      );
       return;
     }
 
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) {
-      alert("Amount must be numeric.");
+      toast.error("Amount must be numeric.");
+      return;
+    }
+
+    if (numericAmount < 0) {
+      toast.error("Amount cannot be negative.");
       return;
     }
 
@@ -302,24 +312,38 @@ export default function ApplicationPage() {
 
       {/* Employee Details */}
       <div>
-        <Label>Employee Name</Label>
+        <Label className="mb-2">
+          Employee Name <span className="text-red-500">*</span>
+        </Label>
         <Input
           value={employeeName}
-          onChange={(e) => setEmployeeName(e.target.value)}
+          onChange={(e) => setEmployeeName(e.target.value.toUpperCase())}
         />
       </div>
       <div>
-        <Label>Position</Label>
-        <Input value={position} onChange={(e) => setPosition(e.target.value)} />
+        <Label className="mb-2">
+          Position <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          value={position}
+          onChange={(e) => setPosition(e.target.value.toUpperCase())}
+        />
       </div>
       <div>
-        <Label>Purpose</Label>
-        <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+        <Label className="mb-2">
+          Purpose <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value.toUpperCase())}
+        />
       </div>
 
       {/* Start Date */}
       <div>
-        <Label>Start Date (Must be Monday)</Label>
+        <Label className="mb-2">
+          Start Date (Must be Monday) <span className="text-red-500">*</span>
+        </Label>
         <Input
           type="date"
           value={startDate}
@@ -333,7 +357,9 @@ export default function ApplicationPage() {
         <>
           {/* Day Select */}
           <div>
-            <Label>Select Day</Label>
+            <Label className="mb-2">
+              Select Day <span className="text-red-500">*</span>
+            </Label>
             <Select onValueChange={setSelectedDay} value={selectedDay}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Day" />
@@ -353,7 +379,9 @@ export default function ApplicationPage() {
           {/* Location - Hidden if already set */}
           {!isExistingDayWithLocation && (
             <div>
-              <Label>Location</Label>
+              <Label className="mb-2">
+                Location <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value.toUpperCase())}
@@ -365,7 +393,9 @@ export default function ApplicationPage() {
 
           {/* Expense Type */}
           <div>
-            <Label>Expense Type</Label>
+            <Label className="mb-2">
+              Expense Type <span className="text-red-500">*</span>
+            </Label>
             <Select onValueChange={setExpenseType} value={expenseType}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Expense" />
@@ -384,7 +414,9 @@ export default function ApplicationPage() {
 
           {/* Amount */}
           <div>
-            <Label>Amount</Label>
+            <Label className="mb-2">
+              Amount <span className="text-red-500">*</span>
+            </Label>
             <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
 
