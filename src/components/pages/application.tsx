@@ -144,7 +144,7 @@ export default function ApplicationPage() {
       console.log(payload);
 
       const res = await axios.post(
-        "https://script.google.com/macros/s/AKfycbxNr5ofw0u3glqe1oE9-gAqLIGf32A6zo3BX8_VF7vwDbgprxHMQjPUwgg5V6pi26E/exec",
+        "https://script.google.com/macros/s/AKfycbzHy6R2V-lC2eO2gsRZWsmfbUqXm3aaLKjMNa4MFz_Cx-aW5C7PS5luF--R08pS5iw/exec",
         JSON.stringify(payload),
       );
 
