@@ -79,10 +79,10 @@ const formatCurrency = (value: number) =>
   }).format(value);
 
 export default function ApplicationPage() {
-  // New fields
   const [employeeName, setEmployeeName] = useState("");
   const [position, setPosition] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [remarks, setRemarks] = useState("");
 
   const [startDate, setStartDate] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
@@ -100,7 +100,8 @@ export default function ApplicationPage() {
 
   // Submit the form
   const handleSubmit = async () => {
-    if (!employeeName || !position || !purpose || !startDate) {
+    // Added remarks to required fields validation
+    if (!employeeName || !position || !purpose || !remarks || !startDate) {
       toast.error("Please complete all required fields before submitting.");
       return;
     }
@@ -136,6 +137,7 @@ export default function ApplicationPage() {
         employeeName,
         position,
         purpose,
+        remarks,
         startDate,
         expenses: expensesByDay,
         grandTotal,
@@ -144,7 +146,7 @@ export default function ApplicationPage() {
       console.log(payload);
 
       const res = await axios.post(
-        "https://script.google.com/macros/s/AKfycbzBM7VNFGYx_W-28pui8CnoXTZArjuWzpEmeGm4BFzX4-Ofi0tlKk1G44I-5gLEpeQ/exec",
+        "https://script.google.com/macros/s/AKfycbw5mbM2WYLgjCfVMEcrgnwtF-zPBeDtuSPgBLYfQPL3sBbL4CYvlm_E-KGTVUzLvx4/exec",
         JSON.stringify(payload),
       );
 
@@ -169,6 +171,7 @@ export default function ApplicationPage() {
     setEmployeeName("");
     setPosition("");
     setPurpose("");
+    setRemarks("");
     setStartDate("");
     setSelectedDay("");
     setLocation("");
@@ -214,10 +217,12 @@ export default function ApplicationPage() {
   const isExistingDayWithLocation = !!existingDayData?.location;
 
   const handleAdd = () => {
+    // Added remarks to required fields check
     if (
       !employeeName ||
       !position ||
       !purpose ||
+      !remarks ||
       !selectedDay ||
       !expenseType ||
       !amount ||
@@ -351,6 +356,18 @@ export default function ApplicationPage() {
         />
       </div>
 
+      {/* Remarks (Whole Form) */}
+      <div className="col-span-full">
+        <Label className="mb-2">
+          Remarks <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          value={remarks}
+          onChange={(e) => setRemarks(e.target.value)}
+          placeholder="Any additional notes or remarks for this request"
+        />
+      </div>
+
       <Separator className="col-span-full" />
 
       {startDate && (
@@ -431,7 +448,7 @@ export default function ApplicationPage() {
           {/* Summary Table */}
           {Object.keys(expensesByDay).length > 0 && (
             <div className="col-span-full">
-              <h2 className="text-lg font-semibold mt-6 bg-black text-white">
+              <h2 className="text-lg font-semibold mt-6 bg-black text-white px-2 py-1">
                 Weekly Summary
               </h2>
 
@@ -446,22 +463,25 @@ export default function ApplicationPage() {
                 <div>
                   <strong>Purpose:</strong> {purpose || "-"}
                 </div>
+                <div>
+                  <strong>Remarks:</strong> {remarks || "-"}
+                </div>
               </div>
 
-              <ButtonGroup className="ml-auto">
+              <ButtonGroup className="ml-auto flex mb-2">
                 <Button
                   size="sm"
                   variant={viewMode === "table" ? "default" : "outline"}
                   onClick={() => setViewMode("table")}
                 >
-                  <Table2 />
+                  <Table2 className="h-4 w-4" />
                 </Button>
                 <Button
                   size="sm"
                   variant={viewMode === "card" ? "default" : "outline"}
                   onClick={() => setViewMode("card")}
                 >
-                  <LayoutGrid />
+                  <LayoutGrid className="h-4 w-4" />
                 </Button>
               </ButtonGroup>
 
@@ -501,7 +521,7 @@ export default function ApplicationPage() {
                                     },
                                   }));
                                 }}
-                                className="uppercase h-8 text-xs min-w-30"
+                                className="uppercase h-8 text-xs min-w-[120px]"
                               />
                             </TableCell>
 
@@ -520,7 +540,7 @@ export default function ApplicationPage() {
                                       onClick={() =>
                                         deleteExpense(key, item.type)
                                       }
-                                      className="h-6 w-6"
+                                      className="h-6 w-6 shrink-0"
                                     >
                                       <Trash2 className="h-3 w-3" />
                                     </Button>
